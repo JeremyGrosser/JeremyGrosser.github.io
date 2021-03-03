@@ -33,7 +33,7 @@ I soldered some headers for the Pico's SWD port, wired it to a Raspberry Pi 4, a
     openocd -f interface/raspberrypi-swd.cfg -f target/rp2040.cfg
 
     arm-eabi-gdb obj/main
-    target external-remote localhost:3333
+    target extended-remote localhost:3333
     monitor arm semihosting enable
     load
     run
