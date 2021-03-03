@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.7.1 -->
+<title>Abstractions and Runtimes | Jeremy Grosser</title>
+<meta name="generator" content="Jekyll v3.9.0" />
+<meta property="og:title" content="Abstractions and Runtimes" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="A month later, much has happened! I’ve implemented drivers for nearly all of the RP2040’s peripherals, Fabien Chouteau contributed an I2C driver, and Daniel King has ported bb-runtimes, including multiprocessing support. Let’s get that blink example updated!" />
+<meta property="og:description" content="A month later, much has happened! I’ve implemented drivers for nearly all of the RP2040’s peripherals, Fabien Chouteau contributed an I2C driver, and Daniel King has ported bb-runtimes, including multiprocessing support. Let’s get that blink example updated!" />
+<link rel="canonical" href="http://localhost:4000/ada/pico/2021/03/02/abstractions-and-runtimes.html" />
+<meta property="og:url" content="http://localhost:4000/ada/pico/2021/03/02/abstractions-and-runtimes.html" />
+<meta property="og:site_name" content="Jeremy Grosser" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2021-03-02T18:37:00-08:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Abstractions and Runtimes" />
+<script type="application/ld+json">
+{"description":"A month later, much has happened! I’ve implemented drivers for nearly all of the RP2040’s peripherals, Fabien Chouteau contributed an I2C driver, and Daniel King has ported bb-runtimes, including multiprocessing support. Let’s get that blink example updated!","@type":"BlogPosting","headline":"Abstractions and Runtimes","dateModified":"2021-03-02T18:37:00-08:00","datePublished":"2021-03-02T18:37:00-08:00","mainEntityOfPage":{"@type":"WebPage","@id":"http://localhost:4000/ada/pico/2021/03/02/abstractions-and-runtimes.html"},"url":"http://localhost:4000/ada/pico/2021/03/02/abstractions-and-runtimes.html","@context":"https://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="http://localhost:4000/feed.xml" title="Jeremy Grosser" /></head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">Jeremy Grosser</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Abstractions and Runtimes</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2021-03-02T18:37:00-08:00" itemprop="datePublished">Mar 2, 2021
+      </time></p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <p>A month later, much has happened! I’ve implemented drivers for nearly all of the RP2040’s peripherals, <a href="https://github.com/Fabien-Chouteau">Fabien Chouteau</a> contributed an I2C driver, and <a href="https://github.com/damaki">Daniel King</a> has ported bb-runtimes, including multiprocessing support. Let’s get that blink example updated!</p>
+
+<p>There are lots of pieces that can be abstracted away and made more flexible. For example, <code class="language-plaintext highlighter-rouge">Ticks</code> shouldn’t be a public variable that can be modified from anywhere. I should also define a new <code class="language-plaintext highlighter-rouge">Time</code> type to differentiate it from other Integers. If you follow these changes to their logical conclusion, you get something that looks like <a href="http://ada-auth.org/standards/12rm/html/RM-D-8.html">Ada.Real_Time</a> which already exists in the Ravenscar runtimes.</p>
+
+<p>The Ada language provides some fairly high level constructs related to tasking, memory management, and timing that aren’t easy or practical to implement on every platform and the use of some of those features may violate a project’s certification requirements. For this reason, there several runtime profiles with varying levels of functionality. So far, I’ve been using a Zero Footprint (ZFP) runtime, which provides only the bare minimum to allocate some stack space, pass arguments, and call a procedure. No batteries included. The next step up would be the <a href="http://ada-auth.org/standards/12rm/html/RM-D-13.html">Ravenscar</a> profile, which allows a broader set of builtin functionality, including tasking and synchronization constructs you’d expect to find in an RTOS. An open source implementation of Ravenscar is available in the <a href="https://github.com/AdaCore/bb-runtimes">bb-runtimes</a> repository, though porting it to a new chip is not a small task. There are other runtime implementations that wrap existing RTOS libraries like <a href="https://github.com/simonjwright/cortex-gnat-rts">FreeRTOS</a> and <a href="https://devel.rtems.org/wiki/TBR/UserManual/RTEMSAda">RTEMS</a>. GNAT GCC also includes runtimes for Linux, FreeBSD, Solaris, HP-UX, VxWorks, LynxOS, QNX, and Windows that implement the full set of libraries in the Ada language specification.</p>
+
+<p>I’ll port our blink example to a Ravenscar RTS (Run-Time System) from bb-runtimes. As the RP2040 is still a new platform, its runtimes haven’t been merged yet and aren’t distributed in the GNAT Community 2020 bundle so I’ll need to build it from source.</p>
+
+<p><a href="https://github.com/JeremyGrosser/pico_examples/blob/master/blog/02-ravenscar-blink/src/main.adb">02-ravenscar-blink</a></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>git clone -b rpi-pico https://github.com/damaki/bb-runtimes
+cd bb-runtimes
+./build_rts.py --build rpi-pico-mp
+cd ../02-ravenscar-blink
+gprbuild -P rpsimple.gpr
+</code></pre></div></div>
+
+<p>You’ll notice that the boot2, crt0, and linker script aren’t needed anymore as they’re included with the runtime. I’ve replaced all of the SysTick stuff with a single <code class="language-plaintext highlighter-rouge">delay 1.0;</code> statement. The RTS has configured the PLLs and the TIMER peripheral, so I now have microsecond resolution tickless operation. We can still do better! The single-cycle loop still takes time to execute, and waking from sleep takes a few cycles too, so the delay between blinks is still not precisely one second.</p>
+
+<p>In <a href="https://github.com/JeremyGrosser/pico_examples/blob/master/blog/03-realtime-blink/src/main.adb">03-realtime-blink</a> I’ve imported <code class="language-plaintext highlighter-rouge">Ada.Real_Time</code> and declared a <code class="language-plaintext highlighter-rouge">Next_Blink</code> variable with type <code class="language-plaintext highlighter-rouge">Time</code>. Time is a private type as the storage representation of time is a non-portable implementation detail. Initializing <code class="language-plaintext highlighter-rouge">Next_Blink</code> with a call to the <code class="language-plaintext highlighter-rouge">Clock</code> function means that time doesn’t even have to start at 0!</p>
+
+<figure class="highlight"><pre><code class="language-ada" data-lang="ada"><span class="n">Next_Blink</span> <span class="p">:</span> <span class="n">Time</span> <span class="o">:=</span> <span class="n">Clock</span><span class="p">;</span></code></pre></figure>
+
+<p>Now that I know when the next blink should happen, I can use a <code class="language-plaintext highlighter-rouge">delay until</code> statement for precision waiting.</p>
+
+<figure class="highlight"><pre><code class="language-ada" data-lang="ada"><span class="k">loop</span>
+   <span class="n">SIO_Periph</span><span class="p">.</span><span class="n">GPIO_OUT_XOR</span><span class="p">.</span><span class="n">GPIO_OUT_XOR</span> <span class="o">:=</span> <span class="n">Pin_Mask</span><span class="p">;</span>
+   <span class="k">delay</span> <span class="k">until</span> <span class="n">Next_Blink</span><span class="p">;</span>
+   <span class="n">Next_Blink</span> <span class="o">:=</span> <span class="n">Next_Blink</span> <span class="o">+</span> <span class="n">Seconds</span> <span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+<span class="k">end</span> <span class="k">loop</span><span class="p">;</span></code></pre></figure>
+
+<p><a href="https://github.com/JeremyGrosser/pico_examples/blob/master/blog/03-realtime-blink/src/main.adb">Source code</a></p>
+
+  </div>
+
+  <div class="page-navigation">
+      
+      <a class="prev" href="/ada/pico/2021/03/02/from-zero-to-blinky-ada.html">&laquo; From Zero to Blinky in Ada</a>
+      
+      
+      <a class="next" href="/ada/pico/2021/03/02/using-drivers.html">Using drivers &raquo;</a>
+      
+  </div><a class="u-url" href="/ada/pico/2021/03/02/abstractions-and-runtimes.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Jeremy Grosser</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">Jeremy Grosser</li><li><a class="u-email" href="mailto:jeremy@synack.me">jeremy@synack.me</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"><li><a href="https://github.com/JeremyGrosser"><svg class="svg-icon"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg> <span class="username">JeremyGrosser</span></a></li><li><a href="https://www.twitter.com/JeremyGrosser"><svg class="svg-icon"><use xlink:href="/assets/minima-social-icons.svg#twitter"></use></svg> <span class="username">JeremyGrosser</span></a></li></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>Hacks and slashes</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>
