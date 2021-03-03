@@ -53,15 +53,12 @@
 
 <figure class="highlight"><pre><code class="language-ada" data-lang="ada"><span class="kn">with</span> <span class="nn">Ada</span><span class="p">.</span><span class="nn">Real_Time</span><span class="p">;</span> <span class="k">use</span> <span class="n">Ada</span><span class="p">.</span><span class="n">Real_Time</span><span class="p">;</span>
 <span class="kn">with</span> <span class="nn">RP</span><span class="p">.</span><span class="nn">GPIO</span><span class="p">;</span> <span class="k">use</span> <span class="n">RP</span><span class="p">.</span><span class="n">GPIO</span><span class="p">;</span>
-<span class="kn">with</span> <span class="nn">RP</span><span class="p">.</span><span class="nn">Clock</span><span class="p">;</span>
 
 <span class="kd">procedure</span> <span class="nf">Main</span> <span class="k">is</span>
     <span class="n">LED</span>        <span class="p">:</span> <span class="n">GPIO_Point</span> <span class="o">:=</span> <span class="p">(</span><span class="n">Pin</span> <span class="o">=&gt;</span> <span class="mi">25</span><span class="p">);</span>
     <span class="n">Next_Blink</span> <span class="p">:</span> <span class="n">Time</span> <span class="o">:=</span> <span class="n">Clock</span><span class="p">;</span>
 <span class="k">begin</span>
-    <span class="n">RP</span><span class="p">.</span><span class="n">Clock</span><span class="p">.</span><span class="n">Initialize</span> <span class="p">(</span><span class="n">XOSC_Frequency</span> <span class="o">=&gt;</span> <span class="mi">12_000_000</span><span class="p">);</span>
     <span class="n">LED</span><span class="p">.</span><span class="n">Configure</span> <span class="p">(</span><span class="n">Output</span><span class="p">);</span>
-
     <span class="k">loop</span>
        <span class="n">LED</span><span class="p">.</span><span class="n">Toggle</span><span class="p">;</span>
        <span class="k">delay</span> <span class="k">until</span> <span class="n">Next_Blink</span><span class="p">;</span>
@@ -69,7 +66,7 @@
     <span class="k">end</span> <span class="k">loop</span><span class="p">;</span>
 <span class="k">end</span> <span class="n">Main</span><span class="p">;</span></code></pre></figure>
 
-<p>You can see that the Main procedure is much more compact and readable now. The clock and PLLs get configured with external oscillator frequency, the PADS_BANK and IO_BANK stuff is wrapped up in a lovely Configure interface, and our GPIO itself is abstracted into an object with a very convenient Toggle method.</p>
+<p>You can see that the Main procedure is much more compact and readable now. The PADS_BANK and IO_BANK stuff is wrapped up in a lovely Configure interface and the GPIO is abstracted into an object with a very convenient Toggle method.</p>
 
 <p>Building the code is done using Alire now, rather than calling gprbuild directly. Alire is analogous to Rust’s Cargo or Python’s pip. Alire keeps track of all of the dependencies and can pull in new ones with the <code class="language-plaintext highlighter-rouge">alr with</code> command. At the time of writing, the rp2040_hal package isn’t available in the Alire index yet, you can clone it manually and pin the dependency.</p>
 
