@@ -1,0 +1,110 @@
+# THIS IS A MACHINE-GENERATED FILE. DO NOT EDIT MANUALLY.
+
+[solution]
+[solution.context]
+solved = true
+[[solution.state]]
+crate = "cortex_m"
+fulfilment = "solved"
+pinned = false
+transitivity = "indirect"
+versions = "~0.3"
+[solution.state.release]
+authors = [
+"AdaCore",
+]
+auto-gpr-with = false
+description = "Drivers for Cortex-M micro-controllers (NVIC, SysTick, etc.)"
+licenses = "BSD-3-Clause"
+long-description = "# cortex-m\n\nAda drivers for the peripherals of ARM Cortex-M micro-controllers\n(NVIC,\\nSysTick, etc.)\n\nThis crate is a snapshot of the `Cortex-M` support in [Ada Drivers\nLibrary](https://github.com/AdaCore/Ada_Drivers_Library/tree/master/arch/ARM/cortex_m).\n\nAny bug report, issue, contribution must be adressed to the [Ada Drivers\nLibrary](https://github.com/AdaCore/Ada_Drivers_Library/) repo.\n\n"
+maintainers = [
+"chouteau@adacore.com",
+]
+maintainers-logins = [
+"Fabien-Chouteau",
+]
+name = "cortex_m"
+project-files = [
+"cortex_m0.gpr",
+"cortex_m4.gpr",
+"cortex_m4f.gpr",
+"cortex_m7.gpr",
+]
+tags = [
+"embedded",
+"arm",
+"nostd",
+]
+version = "0.3.0"
+website = "https://github.com/AdaCore/Ada_Drivers_Library/"
+[solution.state.release.origin]
+commit = "2ed1d3d3324385f9f2183cfb9f562bb215d7a509"
+url = "git+https://github.com/Fabien-Chouteau/cortex-m.git"
+[[solution.state.release.depends-on]]
+hal = "^0.1.0"
+[[solution.state]]
+crate = "hal"
+fulfilment = "solved"
+pinned = false
+transitivity = "indirect"
+versions = "(~0.1) & (^0.1.0)"
+[solution.state.release]
+description = "Hardware Abstraction Layer (HAL)"
+licenses = "BSD-3-Clause"
+long-description = "\n# hal\nHardware Abstraction Layer: interfaces definitions to abstract access to common\nhardware devices and protocols\n\nThis crate is a snapshot of the `hal` in [Ada Drivers\nLibrary](https://github.com/AdaCore/Ada_Drivers_Library/tree/master/hal/src).\nAny bug report, issue, contribution must be adressed to the [Ada Drivers\nLibrary](https://github.com/AdaCore/Ada_Drivers_Library/) repo.\n"
+maintainers = [
+"chouteau@adacore.com",
+]
+maintainers-logins = [
+"Fabien-Chouteau",
+]
+name = "hal"
+project-files = [
+"hal.gpr",
+]
+tags = [
+"embedded",
+"hal",
+"nostd",
+]
+version = "0.1.0"
+[solution.state.release.origin]
+hashes = [
+"sha512:f22ec626e93488cd832f3769bdb221f1375fb1ca9eeafca53e8078e2a980865807297efcc7738099617fa011bbebbf4c79569dbda3092f38cbbc0f9c42c6a68e",
+]
+url = "https://github.com/Fabien-Chouteau/hal/releases/download/v0.1.0/hal-0.1.0.zip"
+[[solution.state]]
+crate = "rp2040_hal"
+fulfilment = "solved"
+pinned = false
+transitivity = "direct"
+versions = "*"
+[solution.state.release]
+authors = [
+"Jeremy Grosser",
+]
+description = "Drivers and HAL for the RP2040 micro-controller family"
+licenses = "BSD-3-Clause"
+maintainers = [
+"Jeremy Grosser <jeremy@synack.me>",
+]
+maintainers-logins = [
+"JeremyGrosser",
+]
+name = "rp2040_hal"
+tags = [
+"embedded",
+"nostd",
+"rp2040",
+"raspberrypi",
+"drivers",
+]
+version = "0.2.1"
+website = "https://github.com/JeremyGrosser/rp2040_hal"
+[solution.state.release.origin]
+commit = "3f05e6b1217e6534534856ff331fb6aebbc24f6b"
+url = "git+https://github.com/JeremyGrosser/rp2040_hal.git"
+[[solution.state.release.depends-on]]
+cortex_m = "~0.3"
+hal = "~0.1"
+
