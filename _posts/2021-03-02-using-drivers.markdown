@@ -11,15 +11,12 @@ Now that I have drivers, I've removed all of the interfaces generated from SVD f
 {% highlight ada %}
 with Ada.Real_Time; use Ada.Real_Time;
 with RP.GPIO; use RP.GPIO;
-with RP.Clock;
 
 procedure Main is
     LED        : GPIO_Point := (Pin => 25);
     Next_Blink : Time := Clock;
 begin
-    RP.Clock.Initialize (XOSC_Frequency => 12_000_000);
     LED.Configure (Output);
-
     loop
        LED.Toggle;
        delay until Next_Blink;
@@ -28,7 +25,7 @@ begin
 end Main;
 {% endhighlight %}
 
-You can see that the Main procedure is much more compact and readable now. The clock and PLLs get configured with external oscillator frequency, the PADS_BANK and IO_BANK stuff is wrapped up in a lovely Configure interface, and our GPIO itself is abstracted into an object with a very convenient Toggle method.
+You can see that the Main procedure is much more compact and readable now. The PADS_BANK and IO_BANK stuff is wrapped up in a lovely Configure interface and the GPIO is abstracted into an object with a very convenient Toggle method.
 
 Building the code is done using Alire now, rather than calling gprbuild directly. Alire is analogous to Rust's Cargo or Python's pip. Alire keeps track of all of the dependencies and can pull in new ones with the `alr with` command. At the time of writing, the rp2040_hal package isn't available in the Alire index yet, you can clone it manually and pin the dependency.
 
