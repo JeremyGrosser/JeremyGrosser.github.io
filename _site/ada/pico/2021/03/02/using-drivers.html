@@ -9,17 +9,17 @@
 <meta property="og:locale" content="en_US" />
 <meta name="description" content="Twiddling bits in registers doesn’t make the most intuitive, readable, or portable code. This is why we write drivers. I’ve created three Alire packages, rp2040_hal, pico_bsp, and pico_examples. rp2040_hal contains all of the drivers for the chip’s internal peripherals, pico_bsp contains some details about the Pico board and drivers for the Pimoroni Pico addons, and pico_examples contains, you guessed it, example code. At the moment, pico_bsp cannot be used with the Ravenscar runtime without modification, so I’ll ignore that and focus on rp2040_hal for right now. The examples repository contains lots of code that uses the pico_bsp if you’d like to see how that works." />
 <meta property="og:description" content="Twiddling bits in registers doesn’t make the most intuitive, readable, or portable code. This is why we write drivers. I’ve created three Alire packages, rp2040_hal, pico_bsp, and pico_examples. rp2040_hal contains all of the drivers for the chip’s internal peripherals, pico_bsp contains some details about the Pico board and drivers for the Pimoroni Pico addons, and pico_examples contains, you guessed it, example code. At the moment, pico_bsp cannot be used with the Ravenscar runtime without modification, so I’ll ignore that and focus on rp2040_hal for right now. The examples repository contains lots of code that uses the pico_bsp if you’d like to see how that works." />
-<link rel="canonical" href="http://localhost:4000/ada/pico/2021/03/02/using-drivers.html" />
-<meta property="og:url" content="http://localhost:4000/ada/pico/2021/03/02/using-drivers.html" />
+<link rel="canonical" href="https://synack.me/ada/pico/2021/03/02/using-drivers.html" />
+<meta property="og:url" content="https://synack.me/ada/pico/2021/03/02/using-drivers.html" />
 <meta property="og:site_name" content="Jeremy Grosser" />
 <meta property="og:type" content="article" />
 <meta property="article:published_time" content="2021-03-02T18:38:00-08:00" />
 <meta name="twitter:card" content="summary" />
 <meta property="twitter:title" content="Using drivers" />
 <script type="application/ld+json">
-{"description":"Twiddling bits in registers doesn’t make the most intuitive, readable, or portable code. This is why we write drivers. I’ve created three Alire packages, rp2040_hal, pico_bsp, and pico_examples. rp2040_hal contains all of the drivers for the chip’s internal peripherals, pico_bsp contains some details about the Pico board and drivers for the Pimoroni Pico addons, and pico_examples contains, you guessed it, example code. At the moment, pico_bsp cannot be used with the Ravenscar runtime without modification, so I’ll ignore that and focus on rp2040_hal for right now. The examples repository contains lots of code that uses the pico_bsp if you’d like to see how that works.","@type":"BlogPosting","headline":"Using drivers","dateModified":"2021-03-02T18:38:00-08:00","datePublished":"2021-03-02T18:38:00-08:00","mainEntityOfPage":{"@type":"WebPage","@id":"http://localhost:4000/ada/pico/2021/03/02/using-drivers.html"},"url":"http://localhost:4000/ada/pico/2021/03/02/using-drivers.html","@context":"https://schema.org"}</script>
+{"description":"Twiddling bits in registers doesn’t make the most intuitive, readable, or portable code. This is why we write drivers. I’ve created three Alire packages, rp2040_hal, pico_bsp, and pico_examples. rp2040_hal contains all of the drivers for the chip’s internal peripherals, pico_bsp contains some details about the Pico board and drivers for the Pimoroni Pico addons, and pico_examples contains, you guessed it, example code. At the moment, pico_bsp cannot be used with the Ravenscar runtime without modification, so I’ll ignore that and focus on rp2040_hal for right now. The examples repository contains lots of code that uses the pico_bsp if you’d like to see how that works.","@type":"BlogPosting","headline":"Using drivers","dateModified":"2021-03-02T18:38:00-08:00","datePublished":"2021-03-02T18:38:00-08:00","mainEntityOfPage":{"@type":"WebPage","@id":"https://synack.me/ada/pico/2021/03/02/using-drivers.html"},"url":"https://synack.me/ada/pico/2021/03/02/using-drivers.html","@context":"https://schema.org"}</script>
 <!-- End Jekyll SEO tag -->
-<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="http://localhost:4000/feed.xml" title="Jeremy Grosser" /></head>
+<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="https://synack.me/feed.xml" title="Jeremy Grosser" /></head>
 <body><header class="site-header" role="banner">
 
   <div class="wrapper"><a class="site-title" rel="author" href="/">Jeremy Grosser</a><nav class="site-nav">
@@ -68,11 +68,10 @@
 
 <p>You can see that the Main procedure is much more compact and readable now. The PADS_BANK and IO_BANK stuff is wrapped up in a lovely Configure interface and the GPIO is abstracted into an object with a very convenient Toggle method.</p>
 
-<p>Building the code is done using Alire now, rather than calling gprbuild directly. Alire is analogous to Rust’s Cargo or Python’s pip. Alire keeps track of all of the dependencies and can pull in new ones with the <code class="language-plaintext highlighter-rouge">alr with</code> command. At the time of writing, the rp2040_hal package isn’t available in the Alire index yet, you can clone it manually and pin the dependency.</p>
+<p>Building the code is done using Alire now, rather than calling gprbuild directly. Alire is analogous to Rust’s Cargo or Python’s pip. Alire keeps track of all of the dependencies and can pull in new ones with the <code class="language-plaintext highlighter-rouge">alr with</code> command.</p>
 
 <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>git clone https://github.com/JeremyGrosser/rp2040_hal
 cd 04-hal-blink
-alr pin --use=../rp2040_hal rp2040_hal
 alr build
 </code></pre></div></div>
 
