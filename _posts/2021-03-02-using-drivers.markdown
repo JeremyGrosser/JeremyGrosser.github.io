@@ -27,11 +27,10 @@ end Main;
 
 You can see that the Main procedure is much more compact and readable now. The PADS_BANK and IO_BANK stuff is wrapped up in a lovely Configure interface and the GPIO is abstracted into an object with a very convenient Toggle method.
 
-Building the code is done using Alire now, rather than calling gprbuild directly. Alire is analogous to Rust's Cargo or Python's pip. Alire keeps track of all of the dependencies and can pull in new ones with the `alr with` command. At the time of writing, the rp2040_hal package isn't available in the Alire index yet, you can clone it manually and pin the dependency.
+Building the code is done using Alire now, rather than calling gprbuild directly. Alire is analogous to Rust's Cargo or Python's pip. Alire keeps track of all of the dependencies and can pull in new ones with the `alr with` command.
 
 	git clone https://github.com/JeremyGrosser/rp2040_hal
 	cd 04-hal-blink
-	alr pin --use=../rp2040_hal rp2040_hal
 	alr build
 
 [Source code](https://github.com/JeremyGrosser/pico_examples/blob/master/blog/04-hal-blink/src/main.adb)
