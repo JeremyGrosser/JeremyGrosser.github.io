@@ -80,6 +80,7 @@ The RP.PIO driver only supports blocking writes to the FIFO, which wastes a lot 
 
 I then rewrote the `Pico.Audio_I2S.Transmit` method to use DMA.
 
+[pico-audio_i2s.adb](https://github.com/JeremyGrosser/pico_bsp/blob/master/src/pico-audio_i2s.adb)
 {% highlight ada %}
    overriding
    procedure Transmit
@@ -107,7 +108,7 @@ I then rewrote the `Pico.Audio_I2S.Transmit` method to use DMA.
    end Transmit;
 {% endhighlight %}
 
-`HAL.Audio.Audio_Buffer` is an array of 16-bit integers. If stereo audio is used, the samples are interleaved. The PIO FIFO buffer is 32 bits wide and the PIO program expects two 16-bit samples in each FIFO write, one for each channel. For mono audio, the top 16 bits are written at zeroes. The DMA channel is configured for 16 or 32 bit writes depending on `This.Channels`. As long as Data is 32 bit aligned, this works out perfectly.
+`HAL.Audio.Audio_Buffer` is an array of 16-bit integers. If stereo audio is used, the samples are interleaved. The PIO FIFO buffer is 32 bits wide and the PIO program expects two 16-bit samples in each FIFO write, one for each channel. For mono audio, the top 16 bits are zeroed. The DMA channel is configured for 16 or 32 bit writes depending on `This.Channels`. As long as Data is 32 bit aligned, this works out perfectly.
 
 After I got DMA working, I spent a few days on audio synthesis. I'd never written any software to generate audio before, so I had a bit of domain knowledge to catch up on but now that I understand it, it's pretty straightforward. The only real complication is the need to call the RP2040's ROM floating point routines if performance or code size is a concern. Daniel King already did [most of the hard work](https://github.com/damaki/bb-runtimes/blob/rpi-pico/arm/rpi/rp2040/s-bootro.adb#L42) in making those library symbols available in Ada and my [RP.ROM.Floating_Point](https://github.com/JeremyGrosser/rp2040_hal/blob/master/src/drivers/rp-rom-floating_point.ads) mostly follows the same pattern.
 
