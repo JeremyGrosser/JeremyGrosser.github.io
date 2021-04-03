@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.7.1 -->
+<title>Making Noise with Ada | Jeremy Grosser</title>
+<meta name="generator" content="Jekyll v3.9.0" />
+<meta property="og:title" content="Making Noise with Ada" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="I’m building an audio synthesizer with Ada on the Raspberry Pi Pico’s RP2040 chip. See my earlier posts about board bring up. This chip has 256 KB of memory, no floating point unit, and no DAC or I2S peripheral. But, it does have some very flexible I/O state machines and a well optimized soft float library in ROM." />
+<meta property="og:description" content="I’m building an audio synthesizer with Ada on the Raspberry Pi Pico’s RP2040 chip. See my earlier posts about board bring up. This chip has 256 KB of memory, no floating point unit, and no DAC or I2S peripheral. But, it does have some very flexible I/O state machines and a well optimized soft float library in ROM." />
+<link rel="canonical" href="https://synack.me/ada/pico/2021/04/02/making-noise-with-ada.html" />
+<meta property="og:url" content="https://synack.me/ada/pico/2021/04/02/making-noise-with-ada.html" />
+<meta property="og:site_name" content="Jeremy Grosser" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2021-04-02T15:00:00-07:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Making Noise with Ada" />
+<script type="application/ld+json">
+{"description":"I’m building an audio synthesizer with Ada on the Raspberry Pi Pico’s RP2040 chip. See my earlier posts about board bring up. This chip has 256 KB of memory, no floating point unit, and no DAC or I2S peripheral. But, it does have some very flexible I/O state machines and a well optimized soft float library in ROM.","@type":"BlogPosting","headline":"Making Noise with Ada","dateModified":"2021-04-02T15:00:00-07:00","datePublished":"2021-04-02T15:00:00-07:00","url":"https://synack.me/ada/pico/2021/04/02/making-noise-with-ada.html","mainEntityOfPage":{"@type":"WebPage","@id":"https://synack.me/ada/pico/2021/04/02/making-noise-with-ada.html"},"@context":"https://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="https://synack.me/feed/blog.atom" title="Jeremy Grosser" /><!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-YWJQVYE65Z"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-YWJQVYE65Z');
+</script>
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">Jeremy Grosser</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Making Noise with Ada</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2021-04-02T15:00:00-07:00" itemprop="datePublished">Apr 2, 2021
+      </time></p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <p>I’m building an audio synthesizer with Ada on the <a href="https://www.raspberrypi.org/products/raspberry-pi-pico/">Raspberry Pi Pico</a>’s <a href="https://www.raspberrypi.org/documentation/rp2040/getting-started/">RP2040</a> chip. See my <a href="https://synack.me/ada/pico/2021/03/03/from-zero-to-blinky-ada.html">earlier</a> <a href="https://synack.me/ada/pico/2021/03/03/abstractions-and-runtimes.html">posts</a> about board bring up. This chip has 256 KB of memory, no floating point unit, and no DAC or I2S peripheral. But, it does have some very flexible I/O state machines and a well optimized soft float library in ROM.</p>
+
+<p>There’s a PIO program in pico-extras called <a href="https://github.com/raspberrypi/pico-extras/blob/master/src/rp2_common/pico_audio_i2s/audio_i2s.pio">audio_i2s.pio</a> that handles the timing sensitive clocking and data bits of I2S. All I need to do is push 16-bit two’s complement signed integers into the PIO FIFO and the state machine handles the rest!</p>
+
+<p>The PIO program includes a block of C code that calls pico-sdk to configure the state machine’s pin muxing and jump to the program’s entry point. I stumbled a bit trying to rewrite this in Ada, but things went much smoother after I refactored my RP.PIO driver to more closely match pico-sdk’s interfaces. This code populates a Configuration record with a bunch of settings, then applies them to the PIO both by setting registers directly and executing a few instructions on the state machine.</p>
+
+<p><a href="https://github.com/JeremyGrosser/pico_bsp/blob/master/src/pico-audio_i2s.adb">pico-audio_i2s.adb</a></p>
+
+<figure class="highlight"><pre><code class="language-ada" data-lang="ada">   <span class="kd">procedure</span> <span class="nf">Program_Init</span>
+      <span class="p">(</span><span class="n">This</span>   <span class="p">:</span> <span class="k">in</span> <span class="k">out</span> <span class="n">I2S_Device</span><span class="p">;</span>
+       <span class="n">Offset</span> <span class="p">:</span> <span class="n">PIO_Address</span><span class="p">)</span>
+   <span class="k">is</span>
+   <span class="k">begin</span>
+      <span class="n">This</span><span class="p">.</span><span class="n">Config</span> <span class="o">:=</span> <span class="n">Default_SM_Config</span><span class="p">;</span>
+      <span class="n">Set_Out_Pins</span> <span class="p">(</span><span class="n">This</span><span class="p">.</span><span class="n">Config</span><span class="p">,</span> <span class="n">This</span><span class="p">.</span><span class="n">Data</span><span class="p">.</span><span class="n">Pin</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+      <span class="n">Set_Sideset_Pins</span> <span class="p">(</span><span class="n">This</span><span class="p">.</span><span class="n">Config</span><span class="p">,</span> <span class="n">This</span><span class="p">.</span><span class="n">BCLK</span><span class="p">.</span><span class="n">Pin</span><span class="p">);</span>
+      <span class="n">Set_Sideset</span> <span class="p">(</span><span class="n">This</span><span class="p">.</span><span class="n">Config</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">False</span><span class="p">,</span> <span class="n">False</span><span class="p">);</span>
+      <span class="n">Set_Out_Shift</span> <span class="p">(</span><span class="n">This</span><span class="p">.</span><span class="n">Config</span><span class="p">,</span> <span class="n">False</span><span class="p">,</span> <span class="n">True</span><span class="p">,</span> <span class="mi">32</span><span class="p">);</span>
+      <span class="n">Set_Wrap</span> <span class="p">(</span><span class="n">This</span><span class="p">.</span><span class="n">Config</span><span class="p">,</span>
+          <span class="n">Wrap</span>        <span class="o">=&gt;</span> <span class="n">Offset</span> <span class="o">+</span> <span class="n">Pico</span><span class="p">.</span><span class="n">Audio_I2S_PIO</span><span class="p">.</span><span class="n">Audio_I2s_Wrap</span><span class="p">,</span>
+          <span class="n">Wrap_Target</span> <span class="o">=&gt;</span> <span class="n">Offset</span> <span class="o">+</span> <span class="n">Pico</span><span class="p">.</span><span class="n">Audio_I2S_PIO</span><span class="p">.</span><span class="n">Audio_I2s_Wrap_Target</span><span class="p">);</span>
+
+      <span class="n">Set_Config</span> <span class="p">(</span><span class="n">This</span><span class="p">.</span><span class="n">PIO</span><span class="p">.</span><span class="k">all</span><span class="p">,</span> <span class="n">This</span><span class="p">.</span><span class="n">SM</span><span class="p">,</span> <span class="n">This</span><span class="p">.</span><span class="n">Config</span><span class="p">);</span>
+      <span class="n">SM_Initialize</span> <span class="p">(</span><span class="n">This</span><span class="p">.</span><span class="n">PIO</span><span class="p">.</span><span class="k">all</span><span class="p">,</span> <span class="n">This</span><span class="p">.</span><span class="n">SM</span><span class="p">,</span> <span class="n">Offset</span><span class="p">,</span> <span class="n">This</span><span class="p">.</span><span class="n">Config</span><span class="p">);</span>
+
+      <span class="n">Set_Pin_Direction</span> <span class="p">(</span><span class="n">This</span><span class="p">.</span><span class="n">PIO</span><span class="p">.</span><span class="k">all</span><span class="p">,</span> <span class="n">This</span><span class="p">.</span><span class="n">SM</span><span class="p">,</span> <span class="n">This</span><span class="p">.</span><span class="n">Data</span><span class="p">.</span><span class="n">Pin</span><span class="p">,</span> <span class="n">Output</span><span class="p">);</span>
+      <span class="n">Set_Pin_Direction</span> <span class="p">(</span><span class="n">This</span><span class="p">.</span><span class="n">PIO</span><span class="p">.</span><span class="k">all</span><span class="p">,</span> <span class="n">This</span><span class="p">.</span><span class="n">SM</span><span class="p">,</span> <span class="n">This</span><span class="p">.</span><span class="n">BCLK</span><span class="p">.</span><span class="n">Pin</span><span class="p">,</span> <span class="n">Output</span><span class="p">);</span>
+      <span class="n">Set_Pin_Direction</span> <span class="p">(</span><span class="n">This</span><span class="p">.</span><span class="n">PIO</span><span class="p">.</span><span class="k">all</span><span class="p">,</span> <span class="n">This</span><span class="p">.</span><span class="n">SM</span><span class="p">,</span> <span class="n">This</span><span class="p">.</span><span class="n">LRCLK</span><span class="p">.</span><span class="n">Pin</span><span class="p">,</span> <span class="n">Output</span><span class="p">);</span>
+
+      <span class="n">Execute</span> <span class="p">(</span><span class="n">This</span><span class="p">.</span><span class="n">PIO</span><span class="p">.</span><span class="k">all</span><span class="p">,</span> <span class="n">This</span><span class="p">.</span><span class="n">SM</span><span class="p">,</span> <span class="n">PIO_Instruction</span> <span class="p">(</span><span class="n">Offset</span> <span class="o">+</span> <span class="n">Pico</span><span class="p">.</span><span class="n">Audio_I2S_PIO</span><span class="p">.</span><span class="n">Offset_entry_point</span><span class="p">));</span>
+   <span class="k">end</span> <span class="n">Program_Init</span><span class="p">;</span></code></pre></figure>
+
+<p>The rest of the clock and GPIO configuration for the PIO is pretty straightforward and I was able to get things up and running pretty easily… Except for my Pico’s broken internal pull down resistor, which took me a while to debug and ended with a silly looking 0603 resistor pulling the I2S data pin to GND.</p>
+
+<p><img src="/img/pulldown-fix.jpg" alt="Pico pull down resistor fix" /></p>
+
+<p>The RP.PIO driver only supports blocking writes to the FIFO, which wastes a lot of cycles that could be used to generate more interesting audio. I had never implemented a DMA driver before and was expecting a challenge, but it was suprisingly simple! Load some configuration registers, set a source and destination address and buffer size, and pull the trigger. The RP2040’s DMA channels have a CTRL register that is aliased four times at different memory addresses and the triggering behavior is slightly different depending on which one you write to. This was a little difficult to understand from the docs, but I eventually figured it out.</p>
+
+<p><a href="https://github.com/JeremyGrosser/rp2040_hal/blob/master/src/drivers/rp-dma.adb#L23">rp-dma.adb</a></p>
+
+<figure class="highlight"><pre><code class="language-ada" data-lang="ada">   <span class="kd">procedure</span> <span class="nf">Configure</span>
+      <span class="p">(</span><span class="n">Channel</span> <span class="p">:</span> <span class="n">DMA_Channel_Id</span><span class="p">;</span>
+       <span class="n">Config</span>  <span class="p">:</span> <span class="n">DMA_Configuration</span><span class="p">)</span>
+   <span class="k">is</span>
+   <span class="k">begin</span>
+      <span class="n">DMA_Periph</span><span class="p">.</span><span class="n">CH</span> <span class="p">(</span><span class="n">Channel</span><span class="p">).</span><span class="n">AL1_CTRL</span> <span class="o">:=</span>
+         <span class="p">(</span><span class="n">EN</span>            <span class="o">=&gt;</span> <span class="n">True</span><span class="p">,</span>
+          <span class="n">HIGH_PRIORITY</span> <span class="o">=&gt;</span> <span class="n">Config</span><span class="p">.</span><span class="n">High_Priority</span><span class="p">,</span>
+          <span class="n">DATA_SIZE</span>     <span class="o">=&gt;</span> <span class="n">Config</span><span class="p">.</span><span class="n">Data_Size</span><span class="p">,</span>
+          <span class="n">INCR_READ</span>     <span class="o">=&gt;</span> <span class="n">Config</span><span class="p">.</span><span class="n">Increment_Read</span><span class="p">,</span>
+          <span class="n">INCR_WRITE</span>    <span class="o">=&gt;</span> <span class="n">Config</span><span class="p">.</span><span class="n">Increment_Write</span><span class="p">,</span>
+          <span class="n">RING_SIZE</span>     <span class="o">=&gt;</span> <span class="n">Config</span><span class="p">.</span><span class="n">Ring_Size</span><span class="p">,</span>
+          <span class="n">RING_SEL</span>      <span class="o">=&gt;</span> <span class="n">Config</span><span class="p">.</span><span class="n">Ring_Wrap</span><span class="p">,</span>
+          <span class="n">CHAIN_TO</span>      <span class="o">=&gt;</span> <span class="n">Config</span><span class="p">.</span><span class="n">Chain_To</span><span class="p">,</span>
+          <span class="n">TREQ_SEL</span>      <span class="o">=&gt;</span> <span class="n">Config</span><span class="p">.</span><span class="n">Trigger</span><span class="p">,</span>
+          <span class="n">IRQ_QUIET</span>     <span class="o">=&gt;</span> <span class="n">Config</span><span class="p">.</span><span class="n">Quiet</span><span class="p">,</span>
+          <span class="n">BSWAP</span>         <span class="o">=&gt;</span> <span class="n">Config</span><span class="p">.</span><span class="n">Byte_Swap</span><span class="p">,</span>
+          <span class="n">SNIFF_EN</span>      <span class="o">=&gt;</span> <span class="n">Config</span><span class="p">.</span><span class="n">Sniff</span><span class="p">,</span>
+          <span class="k">others</span>        <span class="o">=&gt;</span> <span class="o">&lt;&gt;</span><span class="p">);</span>
+   <span class="k">end</span> <span class="n">Configure</span><span class="p">;</span>
+
+   <span class="kd">procedure</span> <span class="nf">Start</span>
+      <span class="p">(</span><span class="n">Channel</span>  <span class="p">:</span> <span class="n">DMA_Channel_Id</span><span class="p">;</span>
+       <span class="n">From</span><span class="p">,</span> <span class="n">To</span> <span class="p">:</span> <span class="n">System</span><span class="p">.</span><span class="n">Address</span><span class="p">;</span>
+       <span class="n">Count</span>    <span class="p">:</span> <span class="n">HAL</span><span class="p">.</span><span class="n">UInt32</span><span class="p">)</span>
+   <span class="k">is</span>
+   <span class="k">begin</span>
+      <span class="n">DMA_Periph</span><span class="p">.</span><span class="n">CH</span> <span class="p">(</span><span class="n">Channel</span><span class="p">).</span><span class="n">READ_ADDR</span> <span class="o">:=</span> <span class="n">From</span><span class="p">;</span>
+      <span class="n">DMA_Periph</span><span class="p">.</span><span class="n">CH</span> <span class="p">(</span><span class="n">Channel</span><span class="p">).</span><span class="n">WRITE_ADDR</span> <span class="o">:=</span> <span class="n">To</span><span class="p">;</span>
+      <span class="n">DMA_Periph</span><span class="p">.</span><span class="n">CH</span> <span class="p">(</span><span class="n">Channel</span><span class="p">).</span><span class="n">AL1_TRANS_COUNT_TRIG</span> <span class="o">:=</span> <span class="n">Count</span><span class="p">;</span>
+   <span class="k">end</span> <span class="n">Start</span><span class="p">;</span></code></pre></figure>
+
+<p>I then rewrote the <code class="language-plaintext highlighter-rouge">Pico.Audio_I2S.Transmit</code> method to use DMA.</p>
+
+<figure class="highlight"><pre><code class="language-ada" data-lang="ada">   <span class="k">overriding</span>
+   <span class="kd">procedure</span> <span class="nf">Transmit</span>
+      <span class="p">(</span><span class="n">This</span> <span class="p">:</span> <span class="k">in</span> <span class="k">out</span> <span class="n">I2S_Device</span><span class="p">;</span>
+       <span class="n">Data</span> <span class="p">:</span> <span class="n">HAL</span><span class="p">.</span><span class="n">Audio</span><span class="p">.</span><span class="n">Audio_Buffer</span><span class="p">)</span>
+   <span class="k">is</span>
+      <span class="n">Count</span> <span class="p">:</span> <span class="n">HAL</span><span class="p">.</span><span class="n">UInt32</span> <span class="o">:=</span> <span class="n">Data</span><span class="p">'</span><span class="na">Length</span><span class="p">;</span>
+   <span class="k">begin</span>
+      <span class="c1">--  Wait for previous DMA transfer to finish before modifying the buffer.</span>
+      <span class="k">while</span> <span class="n">Busy</span> <span class="p">(</span><span class="n">This</span><span class="p">.</span><span class="n">DMA_Channel</span><span class="p">)</span> <span class="k">loop</span>
+         <span class="k">null</span><span class="p">;</span>
+      <span class="k">end</span> <span class="k">loop</span><span class="p">;</span>
+
+      <span class="n">This</span><span class="p">.</span><span class="n">Buffer</span> <span class="p">(</span><span class="mi">1</span> <span class="o">..</span> <span class="n">Data</span><span class="p">'</span><span class="na">Length</span><span class="p">)</span> <span class="o">:=</span> <span class="n">Data</span><span class="p">;</span>
+
+      <span class="k">if</span> <span class="n">This</span><span class="p">.</span><span class="n">Channels</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">then</span>
+         <span class="n">Count</span> <span class="o">:=</span> <span class="n">Data</span><span class="p">'</span><span class="na">Length</span> <span class="o">/</span> <span class="mi">2</span><span class="p">;</span>
+      <span class="k">end</span> <span class="k">if</span><span class="p">;</span>
+
+      <span class="n">RP</span><span class="p">.</span><span class="n">DMA</span><span class="p">.</span><span class="n">Start</span>
+         <span class="p">(</span><span class="n">Channel</span> <span class="o">=&gt;</span> <span class="n">This</span><span class="p">.</span><span class="n">DMA_Channel</span><span class="p">,</span>
+          <span class="n">From</span>    <span class="o">=&gt;</span> <span class="n">This</span><span class="p">.</span><span class="n">Buffer</span><span class="p">'</span><span class="na">Address</span><span class="p">,</span>
+          <span class="n">To</span>      <span class="o">=&gt;</span> <span class="n">TX_FIFO_Address</span> <span class="p">(</span><span class="n">This</span><span class="p">.</span><span class="n">PIO</span><span class="p">.</span><span class="k">all</span><span class="p">,</span> <span class="n">This</span><span class="p">.</span><span class="n">SM</span><span class="p">),</span>
+          <span class="n">Count</span>   <span class="o">=&gt;</span> <span class="n">Count</span><span class="p">);</span>
+   <span class="k">end</span> <span class="n">Transmit</span><span class="p">;</span></code></pre></figure>
+
+<p><code class="language-plaintext highlighter-rouge">HAL.Audio.Audio_Buffer</code> is an array of 16-bit integers. If stereo audio is used, the samples are interleaved. The PIO FIFO buffer is 32 bits wide and the PIO program expects two 16-bit samples in each FIFO write, one for each channel. For mono audio, the top 16 bits are written at zeroes. The DMA channel is configured for 16 or 32 bit writes depending on <code class="language-plaintext highlighter-rouge">This.Channels</code>. As long as Data is 32 bit aligned, this works out perfectly.</p>
+
+<p>After I got DMA working, I spent a few days on audio synthesis. I’d never written any software to generate audio before, so I had a bit of domain knowledge to catch up on but now that I understand it, it’s pretty straightforward. The only real complication is the need to call the RP2040’s ROM floating point routines if performance or code size is a concern. Daniel King already did <a href="https://github.com/damaki/bb-runtimes/blob/rpi-pico/arm/rpi/rp2040/s-bootro.adb#L42">most of the hard work</a> in making those library symbols available in Ada and my <a href="https://github.com/JeremyGrosser/rp2040_hal/blob/master/src/drivers/rp-rom-floating_point.ads">RP.ROM.Floating_Point</a> mostly follows the same pattern.</p>
+
+<p>Neither bb-runtimes nor rp2040_hal override gcc’s trigonometry functions (sinf, cosf, tanf, etc) with the ROM’s implementations as the ROM’s floating point library isn’t strictly compatible with what gcc expects. It would likely work for our use case, but I don’t want to make that decision for other people. Instead, if you need the speed of the ROM functions, you can call them directly. Note that this is different from pico-sdk’s behavior, which uses the ROM functions by default.</p>
+
+<p>Now I have a <a href="https://github.com/JeremyGrosser/pico_examples/tree/master/pimoroni_audio_pack/src">working wavetable oscillator</a>, ADSR envelope filter, and IIR low pass filter on the Pico. I’m starting to think about what kind of user interface I want on this synthesizer and think it would be neat to use the <a href="https://shop.pimoroni.com/products/pico-rgb-keypad-base">Pimoroni RGB Keypad</a> as a sort of crossbar selector for connecting four oscillators to four filters. Unfortunately, the way the Pico Audio Pack is designed, I can’t have it plugged into a Pico at the same time as the keypad, so I’m probably going to need to design a PCB to get it all wired up.</p>
+
+<p>The <a href="https://www.ti.com/product/PCM5100A">PCM5100A</a> I2S DAC that the audio pack uses looks to be in short supply at the moment, but its older sibling, <a href="https://www.ti.com/product/PCM1754">PCM1754</a> is cheap and widely available. The most significant difference between the two is that the PCM1754 needs a MCLK signal running at a multiple of BCLK, whereas the PCM5100A generates MCLK internally by doing clock recovery from BCLK with a PLL. I think the easiest way to generate MCLK from the RP2040 would be to run a second PIO state machine at the higher clock speed and start it in sync with the I2S state machine. The MCLK PIO program should be very simple, just toggling MCLK on each cycle.</p>
+
+<p>Hopefully next month I’ll have some fun sounds and pretty PCB layouts to show you!</p>
+
+  </div>
+
+  <div class="page-navigation">
+      
+      <a class="prev" href="/ada/2021/03/17/should-i-learn-ada-for-embedded-development.html">&laquo; Should I learn Ada for embedded development?</a>
+      
+      
+  </div>
+
+  <a class="u-url" href="/ada/pico/2021/04/02/making-noise-with-ada.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Jeremy Grosser</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name"><li><a class="u-email" href="mailto:jeremy@synack.me">jeremy@synack.me</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"><li><a href="https://github.com/JeremyGrosser"><svg class="svg-icon"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg> <span class="username">JeremyGrosser</span></a></li><li><a href="https://www.twitter.com/JeremyGrosser"><svg class="svg-icon"><use xlink:href="/assets/minima-social-icons.svg#twitter"></use></svg> <span class="username">JeremyGrosser</span></a></li></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>Hacks and slashes</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>
