@@ -13,11 +13,11 @@
 <meta property="og:url" content="https://synack.me/ada/pico/2021/06/10/rp2040-hal-release-0-4-0.html" />
 <meta property="og:site_name" content="Jeremy Grosser" />
 <meta property="og:type" content="article" />
-<meta property="article:published_time" content="2021-06-10T23:02:00-07:00" />
+<meta property="article:published_time" content="2021-06-10T23:35:00-07:00" />
 <meta name="twitter:card" content="summary" />
 <meta property="twitter:title" content="Pico Ada Libraries Release 0.4.0" />
 <script type="application/ld+json">
-{"description":"I’ve tagged release 0.4.0 of the rp2040_hal, pico_bsp, and pico_examples libraries for the Raspberry Pi Pico. Lots of testing and bug fixes on SPI and I2C in this release and both interfaces should be much more stable now. DMA to PIO works well and opens up a lot of possibilities for high speed signaling. Examples have been added for a rigorous SPI loopback test and a custom BSP implementation for the Adafruit Feather RP2040, which should serve as a template for running on any board that uses the RP2040. The Pimoroni Audio Pack example has been updated to use the ROM floating point library to generate a sampled sine output.","@type":"BlogPosting","datePublished":"2021-06-10T23:02:00-07:00","mainEntityOfPage":{"@type":"WebPage","@id":"https://synack.me/ada/pico/2021/06/10/rp2040-hal-release-0-4-0.html"},"url":"https://synack.me/ada/pico/2021/06/10/rp2040-hal-release-0-4-0.html","headline":"Pico Ada Libraries Release 0.4.0","dateModified":"2021-06-10T23:02:00-07:00","@context":"https://schema.org"}</script>
+{"description":"I’ve tagged release 0.4.0 of the rp2040_hal, pico_bsp, and pico_examples libraries for the Raspberry Pi Pico. Lots of testing and bug fixes on SPI and I2C in this release and both interfaces should be much more stable now. DMA to PIO works well and opens up a lot of possibilities for high speed signaling. Examples have been added for a rigorous SPI loopback test and a custom BSP implementation for the Adafruit Feather RP2040, which should serve as a template for running on any board that uses the RP2040. The Pimoroni Audio Pack example has been updated to use the ROM floating point library to generate a sampled sine output.","@type":"BlogPosting","datePublished":"2021-06-10T23:35:00-07:00","mainEntityOfPage":{"@type":"WebPage","@id":"https://synack.me/ada/pico/2021/06/10/rp2040-hal-release-0-4-0.html"},"url":"https://synack.me/ada/pico/2021/06/10/rp2040-hal-release-0-4-0.html","headline":"Pico Ada Libraries Release 0.4.0","dateModified":"2021-06-10T23:35:00-07:00","@context":"https://schema.org"}</script>
 <!-- End Jekyll SEO tag -->
 <link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="https://synack.me/feed/blog.atom" title="Jeremy Grosser" /><!-- Global site tag (gtag.js) - Google Analytics -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-YWJQVYE65Z"></script>
@@ -51,12 +51,14 @@
   <header class="post-header">
     <h1 class="post-title p-name" itemprop="name headline">Pico Ada Libraries Release 0.4.0</h1>
     <p class="post-meta">
-      <time class="dt-published" datetime="2021-06-10T23:02:00-07:00" itemprop="datePublished">Jun 10, 2021
+      <time class="dt-published" datetime="2021-06-10T23:35:00-07:00" itemprop="datePublished">Jun 10, 2021
       </time></p>
   </header>
 
   <div class="post-content e-content" itemprop="articleBody">
     <p>I’ve tagged release 0.4.0 of the <a href="https://github.com/JeremyGrosser/rp2040_hal">rp2040_hal</a>, <a href="https://github.com/JeremyGrosser/pico_bsp">pico_bsp</a>, and <a href="https://github.com/JeremyGrosser/pico_examples">pico_examples</a> libraries for the Raspberry Pi Pico. Lots of testing and bug fixes on SPI and I2C in this release and both interfaces should be much more stable now. DMA to PIO works well and opens up a lot of possibilities for high speed signaling. Examples have been added for a rigorous SPI loopback test and a custom BSP implementation for the Adafruit Feather RP2040, which should serve as a template for running on any board that uses the RP2040. The Pimoroni Audio Pack example has been updated to use the ROM floating point library to generate a sampled sine output.</p>
+
+<p>This release is not yet available from Alire, but a <a href="https://github.com/alire-project/alire-index/pull/287">pull request is pending</a>. See the <a href="https://github.com/JeremyGrosser/pico_examples/blob/master/README.md">pico_examples README</a> for instructions on pinning the new version.</p>
 
 <h1 id="rp2040_hal-040">rp2040_hal 0.4.0</h1>
 
