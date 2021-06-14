@@ -6,8 +6,6 @@ categories: ada pico
 ---
 I've tagged release 0.4.0 of the [rp2040_hal](https://github.com/JeremyGrosser/rp2040_hal), [pico_bsp](https://github.com/JeremyGrosser/pico_bsp), and [pico_examples](https://github.com/JeremyGrosser/pico_examples) libraries for the Raspberry Pi Pico. Lots of testing and bug fixes on SPI and I2C in this release and both interfaces should be much more stable now. DMA to PIO works well and opens up a lot of possibilities for high speed signaling. Examples have been added for a rigorous SPI loopback test and a custom BSP implementation for the Adafruit Feather RP2040, which should serve as a template for running on any board that uses the RP2040. The Pimoroni Audio Pack example has been updated to use the ROM floating point library to generate a sampled sine output.
 
-This release is not yet available from Alire, but a [pull request is pending](https://github.com/alire-project/alire-index/pull/287). See the [pico_examples README](https://github.com/JeremyGrosser/pico_examples/blob/master/README.md) for instructions on pinning the new version.
-
 # rp2040_hal 0.4.0
 
 ## New features
